@@ -20,6 +20,19 @@ app.post("/users", async (request: Request, response: Response) => {
   return response.json(newUser);
 });
 
+app.put("/users/:id", async (request: Request, response: Response) => {
+  const userId = request.params.id;
+  const updatedUser = request.body;
+
+  const user = await User.findByIdAndUpdate(userId, updatedUser, { new: true });
+
+  if (!user) {
+    return response.status(404).json({ error: "Usuário não encontrado" });
+  }
+
+  return response.json(user);
+});
+
 mongoose
   .connect(
     "mongodb+srv://mauromaiodev:4McGOTdr1dbDnW2m@cluster0.yamv0ox.mongodb.net/?retryWrites=true&w=majority"
