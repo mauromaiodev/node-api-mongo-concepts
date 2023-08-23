@@ -33,6 +33,18 @@ app.put("/users/:id", async (request: Request, response: Response) => {
   return response.json(user);
 });
 
+app.delete("/users/:id", async (request: Request, response: Response) => {
+  const userId = request.params.id;
+
+  const user = await User.findByIdAndDelete(userId);
+
+  if (!user) {
+    return response.status(404).json({ error: "Usuário não encontrado" });
+  }
+
+  return response.status(204).send();
+});
+
 mongoose
   .connect(
     "mongodb+srv://mauromaiodev:4McGOTdr1dbDnW2m@cluster0.yamv0ox.mongodb.net/?retryWrites=true&w=majority"
