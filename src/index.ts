@@ -3,7 +3,7 @@ import express, { Request, Response } from "express";
 import mongoose, { ConnectOptions } from "mongoose";
 import User, { UserType } from "./models/User";
 
-dotenv.config({ path: "./.env" });
+dotenv.config();
 
 const app = express();
 
