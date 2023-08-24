@@ -1,6 +1,6 @@
 # API com Node.js, MongoDB, Mongoose, Express e TypeScript (Arquitetura MSC + Routes)
 
-Este é um guia de como configurar e desenvolver uma API utilizando Node.js, MongoDB, Mongoose, Express e TypeScript, seguindo uma arquitetura Model-Service-Controller (MSC) + Routes.
+Este é um guia de como configurar e desenvolver uma API utilizando Node.js, MongoDB, Mongoose, Express, TypeScript, JWT, Criptografia e seguindo uma arquitetura Model-Service-Controller (MSC) + Routes.
 
 ## Pré-requisitos
 
@@ -33,12 +33,14 @@ Certifique-se de que você tenha as seguintes ferramentas instaladas em sua máq
    ```bash
    src/
     ├── controllers/
+    ├── middlewares/
     ├── models/
     ├── routes/
     ├── services/
     └── index.ts
 
     controllers: Contém os controladores responsáveis por lidar com as requisições HTTP e interagir com os serviços.
+    middlewares: Intermediário que gerencia a comunicação do software.
     models: Define os modelos de dados utilizando o Mongoose.
     services: Implementa a lógica de negócio da aplicação.
     routes: Define as rotas da aplicação.
