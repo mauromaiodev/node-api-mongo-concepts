@@ -1,4 +1,3 @@
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User";
 
@@ -14,8 +13,7 @@ export const authController: AuthController = {
     const { username, email, password } = req.body;
 
     try {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = new User({ username, email, password: hashedPassword });
+      const user = new User({ username, email, password });
       await user.save();
       res.json({ message: "Registro feito com sucesso!" });
     } catch (error) {

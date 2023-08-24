@@ -11,7 +11,7 @@ export interface UserType extends mongoose.Document {
   comparePassword(password: string): Promise<boolean>;
 }
 
-const userSchema = new mongoose.Schema(
+export const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
