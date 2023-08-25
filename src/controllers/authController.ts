@@ -1,43 +1,31 @@
-import jwt from "jsonwebtoken";
+import { NextFunction, Request, Response } from "express";
 import User from "../models/User";
+import authService from "../services/authService";
 
-const SECRET_KEY = process.env.SECRET_KEY || "default_secret";
-
-interface AuthController {
-  register: (req: any, res: any, next: any) => Promise<void>;
-  login: (req: any, res: any, next: any) => Promise<void>;
-}
-
-export const authController: AuthController = {
-  async register(req, res, next) {
+const authController = {
+  async register(req: Request, res: Response, next: NextFunction) {
     const { username, email, password } = req.body;
 
     try {
-      const user = new User({ username, email, password });
-      await user.save();
+      const newUser = new User({
+        username,
+        email,
+        password,
+        role: "user",
+      });
+
+      await authService.registerUser(newUser);
       res.json({ message: "Registro feito com sucesso!" });
     } catch (error) {
       next(error);
     }
   },
 
-  async login(req, res, next) {
+  async login(req: Request, res: Response, next: NextFunction) {
     const { username, password } = req.body;
 
     try {
-      const user = await User.findOne({ username });
-      if (!user) {
-        return res.status(404).json({ message: "Usuário não encontrado." });
-      }
-
-      const passwordMatch = await user.comparePassword(password);
-      if (!passwordMatch) {
-        return res.status(401).json({ message: "Senha incorreta" });
-      }
-
-      const token = jwt.sign({ userId: user._id }, SECRET_KEY, {
-        expiresIn: "1 hour",
-      });
+      const token = await authService.loginUser(username, password);
       res.json({ token });
     } catch (error) {
       next(error);
