@@ -8,6 +8,7 @@ export interface UserType extends mongoose.Document {
   role: "user" | "admin";
   createdAt: Date;
   updatedAt: Date;
+  userId: string;
   comparePassword(password: string): Promise<boolean>;
 }
 
