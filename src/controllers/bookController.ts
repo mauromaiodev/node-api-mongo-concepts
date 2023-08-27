@@ -1,129 +1,171 @@
 import { Request, Response } from "express";
-import { BookInputDTO, BookOutputDTO } from "../dtos/BookDTO";
-import Book, { BookType } from "../models/Book";
 import bookService from "../services/bookService";
 
-export const createBook = async (
-  newBookData: BookInputDTO,
-  response: Response
-) => {
-  try {
-    const newBook: BookType = new Book({
-      title: newBookData.title,
-      author: newBookData.author,
-      rentBy: null,
-    });
+interface BookAction {
+  execute(bookId: string, userId: string, response: Response): Promise<void>;
+}
 
-    await newBook.save();
+class RentBookAction implements BookAction {
+  async execute(
+    bookId: string,
+    userId: string,
+    response: Response
+  ): Promise<void> {
+    try {
+      const existingBook = await bookService.getBookById(bookId);
 
-    const bookResponse: BookOutputDTO = {
-      _id: newBook._id.toString(),
-      title: newBook.title,
-      author: newBook.author,
-    };
+      if (!existingBook) {
+        response.status(404).json({ error: "Livro não encontrado." });
+        return;
+      }
 
-    return response.status(201).json({
-      success: true,
-      message: "Livro criado com sucesso.",
-      book: bookResponse,
-    });
-  } catch (error) {
-    return response.status(400).json({ error: "Erro ao criar livro." });
-  }
-};
+      if (existingBook.rentBy !== null) {
+        response.status(400).json({ error: "Livro já está alugado." });
+        return;
+      }
 
-export const rentBook = async (
-  bookId: string,
-  userId: string,
-  response: Response
-) => {
-  try {
-    const rentedBook = await bookService.rentBook(bookId, userId);
-    if (!rentedBook) {
-      return response.status(404).json({ error: "Livro não encontrado." });
+      const rentedBook = await bookService.rentBook(bookId, userId);
+      if (!rentedBook) {
+        response.status(404).json({ error: "Livro não encontrado." });
+        return;
+      }
+
+      response.json({
+        success: true,
+        message: "Livro alugado com sucesso.",
+        book: rentedBook,
+      });
+    } catch (error) {
+      response.status(500).json({ error: "Erro ao alugar livro." });
     }
-    return response.json({
-      success: true,
-      message: "Livro alugado com sucesso.",
-      book: rentedBook,
-    });
-  } catch (error) {
-    return response.status(500).json({ error: "Erro ao alugar livro." });
   }
-};
+}
 
-export const returnBook = async (bookId: string, response: Response) => {
-  try {
-    const returnedBook = await bookService.returnBook(bookId);
-    if (!returnedBook) {
-      return response.status(404).json({ error: "Livro não encontrado." });
+class ReturnBookAction implements BookAction {
+  async execute(
+    bookId: string,
+    userId: string,
+    response: Response
+  ): Promise<void> {
+    try {
+      const existingBook = await bookService.getBookById(bookId);
+
+      if (!existingBook) {
+        response.status(404).json({ error: "Livro não encontrado." });
+        return;
+      }
+
+      if (existingBook.rentBy === null) {
+        response.status(400).json({ error: "Livro não está alugado." });
+        return;
+      }
+
+      const returnedBook = await bookService.returnBook(bookId);
+      if (!returnedBook) {
+        response.status(404).json({ error: "Livro não encontrado." });
+        return;
+      }
+
+      response.json({
+        success: true,
+        message: "Livro devolvido com sucesso.",
+        book: returnedBook,
+      });
+    } catch (error) {
+      response.status(500).json({ error: "Erro ao devolver livro." });
     }
-    return response.json({
-      success: true,
-      message: "Livro devolvido com sucesso.",
-      book: returnedBook,
-    });
-  } catch (error) {
-    return response.status(500).json({ error: "Erro ao devolver livro." });
   }
-};
+}
 
-export const updateBook = async (
-  bookId: string,
-  updatedBookData: Partial<BookType>,
-  response: Response
-) => {
-  try {
-    const updatedBook = await bookService.updateBook(bookId, updatedBookData);
-    if (!updatedBook) {
-      return response.status(404).json({ error: "Livro não encontrado." });
+export class BookController {
+  private rentBookAction: BookAction = new RentBookAction();
+  private returnBookAction: BookAction = new ReturnBookAction();
+
+  async rentBook(request: Request, response: Response): Promise<Response> {
+    const { bookId } = request.params;
+    const { userId } = request.user!;
+
+    await this.rentBookAction.execute(bookId, userId, response);
+    return response;
+  }
+
+  async returnBook(request: Request, response: Response): Promise<Response> {
+    const { bookId } = request.params;
+
+    await this.returnBookAction.execute(bookId, request.user!.userId, response);
+    return response;
+  }
+
+  async getAllBooks(request: Request, response: Response): Promise<Response> {
+    try {
+      const books = await bookService.getAllBooks();
+      return books.length === 0
+        ? response.json({ message: "Não há livros." })
+        : response.json(books);
+    } catch (error) {
+      return response.status(500).json({ error: "Erro ao buscar livros." });
     }
-    return response.json({
-      success: true,
-      message: "Livro atualizado com sucesso.",
-      book: updatedBook,
-    });
-  } catch (error) {
-    return response.status(500).json({ error: "Erro ao atualizar livro." });
   }
-};
 
-export const deleteBook = async (bookId: string, response: Response) => {
-  try {
-    const deletedBook = await bookService.deleteBook(bookId);
-    if (!deletedBook) {
-      return response.status(404).json({ error: "Livro não encontrado." });
+  async getBookById(request: Request, response: Response): Promise<Response> {
+    const { bookId } = request.params;
+
+    try {
+      const book = await bookService.getBookById(bookId);
+      if (!book) {
+        return response.status(404).json({ error: "Livro não encontrado." });
+      }
+
+      return response.json(book);
+    } catch (error) {
+      return response.status(500).json({ error: "Erro ao buscar livro." });
     }
-    return response.json({
-      success: true,
-      message: "Livro deletado com sucesso.",
-      book: deletedBook,
-    });
-  } catch (error) {
-    return response.status(500).json({ error: "Erro ao deletar livro." });
   }
-};
 
-export const getAllBooks = async (request: Request, response: Response) => {
-  try {
-    const books = await bookService.getAllBooks();
-    return books.length === 0
-      ? response.json({ message: "Não há livros." })
-      : response.json(books);
-  } catch (error) {
-    return response.status(500).json({ error: "Erro ao buscar livros." });
+  async createBook(request: Request, response: Response): Promise<Response> {
+    try {
+      const newBook = await bookService.createBook(request.body);
+      return response.status(201).json(newBook);
+    } catch (error) {
+      return response.status(400).json({ error: "Erro ao criar livro." });
+    }
   }
-};
 
-export const getRentedBooks = async (request: Request, response: Response) => {
-  try {
-    const rentedBooks = await bookService.getRentedBooks();
-    return rentedBooks.length === 0
-      ? response.json({ message: "Não há livros alugados." })
-      : response.json(rentedBooks);
-  } catch (error) {
-    return response
-      .status(500)
-      .json({ error: "Erro ao buscar livros alugados." });
+  async updateBook(request: Request, response: Response): Promise<Response> {
+    const { bookId } = request.params;
+
+    try {
+      const updatedBook = await bookService.updateBook(bookId, request.body);
+      return response.json(updatedBook);
+    } catch (error) {
+      return response.status(500).json({ error: "Erro ao atualizar livro." });
+    }
   }
-};
+
+  async deleteBook(request: Request, response: Response): Promise<Response> {
+    const { bookId } = request.params;
+
+    try {
+      const deletedBook = await bookService.deleteBook(bookId);
+      return response.json(deletedBook);
+    } catch (error) {
+      return response.status(500).json({ error: "Erro ao deletar livro." });
+    }
+  }
+
+  async getRentedBooks(
+    request: Request,
+    response: Response
+  ): Promise<Response> {
+    try {
+      const rentedBooks = await bookService.getRentedBooks();
+      return rentedBooks.length === 0
+        ? response.json({ message: "Não há livros alugados." })
+        : response.json(rentedBooks);
+    } catch (error) {
+      return response
+        .status(500)
+        .json({ error: "Erro ao buscar livros alugados." });
+    }
+  }
+}
