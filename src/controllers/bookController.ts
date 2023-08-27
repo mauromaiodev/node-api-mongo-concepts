@@ -5,22 +5,17 @@ const bookController = {
   async getAllBooks(request: Request, response: Response) {
     try {
       const books = await bookService.getAllBooks();
-
-      if (books.length === 0) {
-        return response.json({ message: "Não há livros." });
-      }
-
-      return response.json(books);
+      return books.length === 0
+        ? response.json({ message: "Não há livros." })
+        : response.json(books);
     } catch (error) {
       return response.status(500).json({ error: "Erro ao buscar livros." });
     }
   },
 
   async createBook(request: Request, response: Response) {
-    const newBookInput = request.body;
-
     try {
-      const newBook = await bookService.createBook(newBookInput);
+      const newBook = await bookService.createBook(request.body);
       return response.status(201).json(newBook);
     } catch (error) {
       return response.status(400).json({ error: "Erro ao criar livro." });
@@ -52,10 +47,9 @@ const bookController = {
 
   async updateBook(request: Request, response: Response) {
     const { bookId } = request.params;
-    const updatedBookData = request.body;
 
     try {
-      const updatedBook = await bookService.updateBook(bookId, updatedBookData);
+      const updatedBook = await bookService.updateBook(bookId, request.body);
       return response.json(updatedBook);
     } catch (error) {
       return response.status(500).json({ error: "Erro ao atualizar livro." });
@@ -76,12 +70,9 @@ const bookController = {
   async getRentedBooks(request: Request, response: Response) {
     try {
       const rentedBooks = await bookService.getRentedBooks();
-
-      if (rentedBooks.length === 0) {
-        return response.json({ message: "Não há livros alugados." });
-      }
-
-      return response.json(rentedBooks);
+      return rentedBooks.length === 0
+        ? response.json({ message: "Não há livros alugados." })
+        : response.json(rentedBooks);
     } catch (error) {
       return response
         .status(500)
