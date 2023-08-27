@@ -12,18 +12,6 @@ class RentBookAction implements BookAction {
     response: Response
   ): Promise<void> {
     try {
-      const existingBook = await bookService.getBookById(bookId);
-
-      if (!existingBook) {
-        response.status(404).json({ error: "Livro não encontrado." });
-        return;
-      }
-
-      if (existingBook.rentBy !== null) {
-        response.status(400).json({ error: "Livro já está alugado." });
-        return;
-      }
-
       const rentedBook = await bookService.rentBook(bookId, userId);
       if (!rentedBook) {
         response.status(404).json({ error: "Livro não encontrado." });
@@ -48,18 +36,6 @@ class ReturnBookAction implements BookAction {
     response: Response
   ): Promise<void> {
     try {
-      const existingBook = await bookService.getBookById(bookId);
-
-      if (!existingBook) {
-        response.status(404).json({ error: "Livro não encontrado." });
-        return;
-      }
-
-      if (existingBook.rentBy === null) {
-        response.status(400).json({ error: "Livro não está alugado." });
-        return;
-      }
-
       const returnedBook = await bookService.returnBook(bookId);
       if (!returnedBook) {
         response.status(404).json({ error: "Livro não encontrado." });
