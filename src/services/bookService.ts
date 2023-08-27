@@ -32,6 +32,10 @@ const bookService = {
     );
     return rentedBooks;
   },
+
+  getBookById(bookId: string): Promise<BookType | null> {
+    return Book.findById(bookId);
+  },
 };
 
 export default bookService;
