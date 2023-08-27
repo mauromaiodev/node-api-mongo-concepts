@@ -1,5 +1,3 @@
-// controller/bookController.ts
-
 import { Request, Response } from "express";
 import { BookInputDTO, BookOutputDTO } from "../dtos/BookDTO";
 import Book, { BookType } from "../models/Book";
