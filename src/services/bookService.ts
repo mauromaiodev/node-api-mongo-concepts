@@ -2,7 +2,7 @@ import Book, { BookType } from "../models/Book";
 
 const bookService = {
   getAllBooks() {
-    return Book.find().populate("rentBy", "username");
+    return Book.find().populate("rentBy", "_id");
   },
 
   createBook(newBook: BookType) {
@@ -18,17 +18,27 @@ const bookService = {
   },
 
   async rentBook(bookId: string, userId: string) {
-    return Book.findByIdAndUpdate(bookId, { rentBy: userId }, { new: true });
+    const updatedBook = await Book.findByIdAndUpdate(
+      bookId,
+      { rentBy: userId },
+      { new: true }
+    );
+    return updatedBook ? { rentBy: updatedBook.rentBy } : null;
   },
 
   async returnBook(bookId: string) {
-    return Book.findByIdAndUpdate(bookId, { rentBy: null }, { new: true });
+    const updatedBook = await Book.findByIdAndUpdate(
+      bookId,
+      { rentBy: null },
+      { new: true }
+    );
+    return updatedBook ? { rentBy: updatedBook.rentBy } : null;
   },
 
   async getRentedBooks() {
     const rentedBooks = await Book.find({ rentBy: { $ne: null } }).populate(
       "rentBy",
-      "username"
+      "_id"
     );
     return rentedBooks;
   },
