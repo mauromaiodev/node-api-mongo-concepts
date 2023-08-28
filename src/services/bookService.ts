@@ -2,7 +2,7 @@ import Book, { BookType } from "../models/Book";
 
 const bookService = {
   getAllBooks() {
-    return Book.find().populate("rentBy", "_id");
+    return Book.find().populate("rentBy");
   },
 
   createBook(newBook: BookType) {
@@ -44,7 +44,7 @@ const bookService = {
   },
 
   getBookById(bookId: string): Promise<BookType | null> {
-    return Book.findById(bookId);
+    return Book.findById(bookId).populate("rentBy");
   },
 };
 
